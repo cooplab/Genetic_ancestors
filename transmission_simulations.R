@@ -2,6 +2,8 @@
 recoms<-read.table("recombination_events.out",as.is=TRUE,head=TRUE)
 source("transmission_sims_functions.R")
 
+inds.sex<-unique(recoms$sexind)
+
 #####Probability of transmitting all chromosomes without recombination, for mothers "M", change to "F" for fathers.
 inds<-unique(temp1$ind)
 prob.no.rec<-sapply(1:22,function(chr){
@@ -184,14 +186,14 @@ dev.off()
 
 #####Compare probability of zero from sims to theoretical approximation
 k<-1:15
-png(file="~/Dropbox/Pedigree_Recom/Prob_zero_blocks_vs_theory.png")
+png(file="Prob_zero_blocks_vs_theory.png")
 plot(k,1-exp(-(22+35*(k-1))/(2^(k-1))),xlab="generation back",ylab="Probability that an ancestor is an autosomal genetic ancestor",type="l");points(k,1-num.zeros(num.blocks.all))
  legend("bottomleft",legend=c("Simulations","Theoretical approximation"),pch=c(1,NA),lty=c(NA,1))
 dev.off()
 
 
 ####Number of genetic ancestors vs genealogical ancestors
-png(file="~/Dropbox/Pedigree_Recom/Num_genetics_vs_genealogical_ancs.png")
+png(file="Num_genetics_vs_genealogical_ancs.png")
 k<-1:20;num.blocks<-(22+33*(k-1))/(2^(k-1));
 
 plot(2*(1-exp(-num.blocks))*(2^(k-1)),xlab="Generations ago",ylab="Expected number of ancestors");lines(2^k,col="red")
