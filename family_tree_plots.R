@@ -1,3 +1,5 @@
+source("family_tree_plotting_functions.R")
+
 
 ####Simple family tree
 png(file="family_tree.png",width = 800, height = 800)
@@ -20,6 +22,8 @@ dev.off()
 ##simulate a fmaily running back num.meiosis generations
 family.chunks<-simulate.pedigree(num.meioses=11)
 
+
+###plot out family tree with coloring indicating how much they contribute
 pdf(file="family_tree_w_11_gens.pdf",width = 800, height = 800)
 k=11
 par(mar=c(0,0,0,0))
@@ -103,11 +107,28 @@ dev.off()
 
 
 
-#which.relly<-2; old.relly<-"mother";other.relly<-"sibling's"
-#which.relly<-3; old.relly<-"Grandmother";other.relly<-"1st cousin's"
-#which.relly<-4; old.relly<-"Great\n Grandmother";other.relly<-"2nd cousin's"
-#which.relly<-5; old.relly<-"Great,\n Great Grandmother";other.relly<-"3rd cousin's"
-which.relly<-6; old.relly<-"Great,\n Great, Great\n Grandmother";other.relly<-"4th cousin's"
+###Picture of your genome across two generations
+chr.width=0.3
+chr.lengths<-sapply(1:22,function(chr){max(recoms$mid[recoms$chr==chr])})
+offset=0.2
+par(mar=c(0,0,0,0))
+layout(t(1:3))
+plot.all.chr()
+chr.chunks(family.1.chunks,my.col="purple",meiosis=1,relly.pos=1); 
+text(0.7,20,"Your genome in\n your Mum",cex=1.5,col="purple")
+plot.all.chr()
+chr.chunks(family.1.chunks,my.col=adjustcolor("red",.5),meiosis=2,relly.pos=1); 
+text(0.7,20,paste("Your genome in\n your Maternal\n grandmum"),cex=1.5,col="blue")
+plot.all.chr()
+chr.chunks(family.1.chunks,my.col="blue",meiosis=2,relly.pos=2); 
+text(0.7,20,paste("Your genome \n in your Maternal\n granddad"),cex=1.5,col="red")
+
+
+#meiosis<-1; old.relly<-"mother";other.relly<-"sibling's"
+#meiosis<-2; old.relly<-"Grandmother";other.relly<-"1st cousin's"
+#meiosis<-3; old.relly<-"Great\n Grandmother";other.relly<-"2nd cousin's"
+#meiosis<-4; old.relly<-"Great,\n Great Grandmother";other.relly<-"3rd cousin's"
+#meiosis<-5; old.relly<-"Great,\n Great, Great\n Grandmother";other.relly<-"4th cousin's"
 
 
 chr.width=0.3
@@ -116,25 +137,17 @@ offset=0.2
 par(mar=c(0,0,0,0))
 layout(t(1:3))
 plot.all.chr()
-chr.chunks(family.1.chunks[[which.relly]],my.col="red"); 
+chr.chunks(family.1.chunks,my.col="red",meiosis=meiosis,relly.pos=1); 
 text(0.7,20,paste("Your genome in\n your",old.relly),cex=1.5,col="red")
 plot.all.chr()
-chr.chunks(family.2.chunks[[which.relly]],my.col=adjustcolor("blue",.5)); 
+chr.chunks(family.2.chunks,my.col=adjustcolor("blue",.5),meiosis=meiosis,relly.pos=1); 
 text(0.7,20,paste("Your",other.relly, "\n genome in\n your",old.relly),cex=1.5,col="blue")
 plot.all.chr()
-chr.chunks(family.1.chunks[[which.relly]],my.col="red"); 
+chr.chunks(family.1.chunks,my.col="red",meiosis=meiosis,relly.pos=1); 
 text(0.7,20,paste("Both your genomes \n in your \n",old.relly),cex=1.5,col="purple")
-chr.chunks(family.2.chunks[[which.relly]],my.col=adjustcolor("blue",.5))
+chr.chunks(family.2.chunks,my.col=adjustcolor("blue",.5),meiosis=meiosis,relly.pos=1)
 
 
 
-
-
-sapply(1:22,function(chr){  
-   	blocks<-family.2.chunks[[3]][[1]][[chr]]/chr.lengths[1] 
-	if(!is.null(nrow(blocks))) apply(blocks,1,function(x){x= polygon(x=c(x,rev(x)),c(rep(chr+offset,2),rep(chr+offset+chr.width,2)),col=adjustcolor("blue",.5))})
-	 blocks<-family.2.chunks[[3]][[2]][[chr]]/chr.lengths[1]
- 	if(!is.null(nrow(blocks))) apply(blocks,1,function(x){x= polygon(x=c(x,rev(x)),c(rep(chr-offset,2),rep(chr-offset+chr.width,2)),col=adjustcolor("blue",.5))})
-})
 
   

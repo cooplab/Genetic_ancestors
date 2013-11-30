@@ -52,7 +52,7 @@ simulate.pedigree<-function(num.meioses){
 	family.chunks[[1]][[2]]<-initiate.chrs()
 	
 	for(meiosis in 1:num.meioses){
-		par.sex<-rep(c("M","F"),2^(meiosis-1))
+		par.sex<-rep(c("M","F"),2^(meiosis-1))   ##mother father
 		
 		for(my.par in 1:2^meiosis){
 	
