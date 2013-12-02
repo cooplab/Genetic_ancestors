@@ -108,21 +108,24 @@ dev.off()
 
 
 ###Picture of your genome across two generations
-chr.width=0.3
-chr.lengths<-sapply(1:22,function(chr){max(recoms$mid[recoms$chr==chr])})
-offset=0.2
-par(mar=c(0,0,0,0))
-layout(t(1:3))
-plot.all.chr()
-chr.chunks(family.1.chunks,my.col="purple",meiosis=1,relly.pos=1); 
-text(0.7,20,"Your genome in\n your Mum",cex=1.5,col="purple")
-plot.all.chr()
-chr.chunks(family.1.chunks,my.col=adjustcolor("red",.5),meiosis=2,relly.pos=1); 
-text(0.7,20,paste("Your genome in\n your Maternal\n grandmum"),cex=1.5,col="blue")
-plot.all.chr()
-chr.chunks(family.1.chunks,my.col="blue",meiosis=2,relly.pos=2); 
-text(0.7,20,paste("Your genome \n in your Maternal\n granddad"),cex=1.5,col="red")
-
+for(i in 1:10){
+	png(file=paste("plots/mother_maternal_grandpars",i,".png",sep=""))
+	chr.width=0.3
+	chr.lengths<-sapply(1:22,function(chr){max(recoms$mid[recoms$chr==chr])})
+	offset=0.2
+	par(mar=c(0,0,0,0))
+	layout(t(1:3))
+	plot.all.chr()
+	chr.chunks(my.families[,i],my.col=adjustcolor("purple",0.5),meiosis=1,relly.pos=1); 
+	text(0.7,20,"Your genome in\n your Mum",cex=1.5,col="purple")
+	plot.all.chr()
+	chr.chunks(my.families[,i],my.col=adjustcolor("red",.5),meiosis=2,relly.pos=1); 
+	text(0.7,20,paste("Your genome in\n your Maternal\n grandmum"),cex=1.5,col="red")
+	plot.all.chr()
+	chr.chunks(my.families[,i],my.col=adjustcolor("blue",0.5),meiosis=2,relly.pos=2); 
+	text(0.7,20,paste("Your genome \n in your Maternal\n granddad"),cex=1.5,col="blue")
+	dev.off()
+}
 
 #meiosis<-1; old.relly<-"mother";other.relly<-"sibling's"
 #meiosis<-2; old.relly<-"Grandmother";other.relly<-"1st cousin's"
@@ -137,17 +140,85 @@ offset=0.2
 par(mar=c(0,0,0,0))
 layout(t(1:3))
 plot.all.chr()
-chr.chunks(family.1.chunks,my.col="red",meiosis=meiosis,relly.pos=1); 
+chr.chunks(my.families[,1],my.col="red",meiosis=meiosis,relly.pos=1); 
 text(0.7,20,paste("Your genome in\n your",old.relly),cex=1.5,col="red")
 plot.all.chr()
-chr.chunks(family.2.chunks,my.col=adjustcolor("blue",.5),meiosis=meiosis,relly.pos=1); 
+chr.chunks(my.families[,2],my.col=adjustcolor("blue",.5),meiosis=meiosis,relly.pos=1); 
 text(0.7,20,paste("Your",other.relly, "\n genome in\n your",old.relly),cex=1.5,col="blue")
 plot.all.chr()
-chr.chunks(family.1.chunks,my.col="red",meiosis=meiosis,relly.pos=1); 
+chr.chunks(my.families[,1],my.col="red",meiosis=meiosis,relly.pos=1); 
 text(0.7,20,paste("Both your genomes \n in your \n",old.relly),cex=1.5,col="purple")
-chr.chunks(family.2.chunks,my.col=adjustcolor("blue",.5),meiosis=meiosis,relly.pos=1)
+chr.chunks(my.families[,2],my.col=adjustcolor("blue",.5),meiosis=meiosis,relly.pos=1)
 
 
+#my.families<-replicate(50,simulate.pedigree(num.meioses=10))
+#save(file="simulated_pedigrees.Robj",my.families)
+load("simulated_pedigrees.Robj")
 
+if(FALSE){
+half.rellys<-list()
+full.rellys<-list()
 
-  
+for(meiosis in 1:8){
+	
+	temp<-lapply(1:49,function(i){
+		lapply((i+1):50,function(j){
+			if(meiosis<6){ 
+				IBD.overlap.overall(my.blocks.1=my.families[,i],my.blocks.2=my.families[,j],meiosis=meiosis)
+			}else{
+				IBD.overlap.overall(my.blocks.1=my.families[,i],my.blocks.2=my.families[,j],meiosis=meiosis,sample.down=TRUE)		
+			}
+
+		})
+	})
+	
+	half.rellys[[meiosis]]<-unlist(lapply(temp,function(x){lapply(x,function(y){y$half})}))
+	full.rellys[[meiosis]]<-unlist(lapply(temp,function(x){lapply(x,function(y){y$full})}))
+	print(meiosis)
+	save(file="IBD_sharing_between_rellies.Robj",half.rellys,full.rellys)
+}
+}
+load(file="IBD_sharing_between_rellies.Robj")
+
+png(file="plots/overlap_between_full_cousins.png")
+cousin<-c("sibs","first","second","third","fouth","fifth","sixth")
+par(mar=c(3,3,2,1))
+breaks=seq(-0.5,70,by=1)
+layout(matrix(1:6,nrow=2,byrow=TRUE))
+for(meiosis in 2:7){
+	a<-hist(full.rellys[[meiosis]],breaks=breaks,plot=FALSE)
+	upper.x<-a$mid[min(which(a$density==0)) ]
+	if(upper.x==0) upper.x<-70
+	plot(a$mid,a$density,type="l",xlim=c(0,upper.x))
+	points(0:70,dpois(0:70,2*(33.8*(meiosis*2)+22)/(2^(2*meiosis-1))),col="lightgrey",pch=19)
+	lines(a$mid,a$density,type="l",lwd=2)
+	mtext("probability",2,line=2)
+	mtext("# of IBD blocks",1,line=2)
+	mtext(paste("full",cousin[meiosis],"cousins"),3,line=0)
+}  
+dev.off()
+
+png(file="plots/overlap_between_half_cousins.png")
+cousin<-c("sibs","first","second","third","fouth","fifth","sixth")
+par(mar=c(3,3,2,1))
+breaks=seq(-0.5,70,by=1)
+layout(matrix(1:6,nrow=2,byrow=TRUE))
+for(meiosis in 2:7){
+	a<-hist(half.rellys[[meiosis]],breaks=breaks,plot=FALSE)
+	upper.x<-a$mid[min(which(a$density==0)) ]
+	if(upper.x==0) upper.x<-70
+	plot(a$mid,a$density,type="l",xlim=c(0,upper.x))
+	points(0:70,dpois(0:70,(33.8*(2*meiosis)+22)/(2^(2*meiosis-1))),col="lightgrey",pch=19)
+	lines(a$mid,a$density,type="l",lwd=2)
+	mtext("probability",2,line=2)
+	mtext("# of IBD blocks",1,line=2)
+	mtext(paste("half",cousin[meiosis],"cousins"),3,line=0)
+} 
+dev.off()
+
+plot(1:8,sapply(half.rellys,function(x){mean(x==0)}),xlab= "ancestor shared k generations back",ylab="Probability of sharing zero genomic regions from anc.",pch=19,cex.lab=1.2)
+points(1:8,sapply(full.rellys,function(x){mean(x==0)}),col="red",pch=19)
+legend("topleft",legend=c("full-degree relatives","half-degree relatives","approx. full-degree relatives","approx. half-degree relatives"),pch=c(rep(19,2),rep(NA,2)),lty=c(rep(NA,2),rep(1,2)),col=c("red","black","red","black"))
+meiosis<-1:8
+lines(meiosis,exp(-2*(33.8*(2*meiosis)+22)/(2^(2*meiosis-1))))
+lines(meiosis,exp(-(33.8*(2*meiosis)+22)/(2^(2*meiosis-1))),col="red")

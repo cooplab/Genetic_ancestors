@@ -93,29 +93,37 @@ if (is.list(radial.extents)) {
     }
 }
 
-
-IBD.overlap.overall<-function(my.blocks.1,my.blocks.2,meiosis){
+##overlap<-IBD.overlap.overall(my.blocks.1=family.1.chunks,my.blocks.2=family.2.chunks,meiosis=1)
+IBD.overlap.overall<-function(my.blocks.1,my.blocks.2,meiosis,sample.down=FALSE){
+	
 	num.ancs<-1:2^(meiosis)
-#outer(num.ancs,num.ancs,IBD.overlap,my.blocks.1=family.1.chunks,my.blocks.2=family.2.chunks,meiosis=meiosis)
+	if(sample.down) num.ancs<-sample(num.ancs,20)
+	##overlap between 1/2 relatives, e.g. half 1st cousins
 	overlap.half<-sapply(num.ancs,function(anc.1){
 		sapply(num.ancs,function(anc.2){
-			IBD.overlap(relly.pos1=anc.1,relly.pos2=anc.2,my.blocks.1=family.1.chunks,my.blocks.2=family.2.chunks,meiosis=meiosis)
+			IBD.overlap(relly.pos1=anc.1,relly.pos2=anc.2,my.blocks.1=my.blocks.1,my.blocks.2=my.blocks.2,meiosis=meiosis)
 		})
 	})
-	
+
+	num.ancs<-1:2^(meiosis)
 	mammas<-num.ancs[(num.ancs %% 2)==1]
 	pappas<-num.ancs[(num.ancs %% 2)==0]
 	par.combos<-1:2^(meiosis-1)
-	
+	if(sample.down) par.combos<-sample(par.combos,20)
+	##overlap between full relatives, e.g. full cousins
 	overlap.full<-sapply(par.combos,function(par.1){
 		sapply(par.combos,function(par.2){		
-				mat.ibd<-IBD.overlap(relly.pos1=mammas[par.1],relly.pos2=mammas[par.2],my.blocks.1=family.1.chunks,my.blocks.2=family.2.chunks,meiosis=meiosis)
-				pat.ibd<-IBD.overlap(relly.pos1=pappas[par.1],relly.pos2=pappas[par.2],my.blocks.1=family.1.chunks,my.blocks.2=family.2.chunks,meiosis=meiosis)
-				cat(mat.ibd,pat.ibd,"\n")
-#				return(mat.ibd+pat.ibd)
-			})
-			})		
-	half=list(c(overlap.half), full=c(overlap.full))
+				mat.ibd<-IBD.overlap(relly.pos1=mammas[par.1],relly.pos2=mammas[par.2],my.blocks.1=my.blocks.1,my.blocks.2=my.blocks.2,meiosis=meiosis)
+				pat.ibd<-IBD.overlap(relly.pos1=pappas[par.1],relly.pos2=pappas[par.2],my.blocks.1=my.blocks.1,my.blocks.2=my.blocks.2,meiosis=meiosis)
+	#			cat(mat.ibd,pat.ibd,"\n")
+				return(mat.ibd+pat.ibd)
+		})
+	})	
+	overlap	<-list()
+	overlap[["half"]]<-c(overlap.half)
+	overlap[["full"]]<-c(overlap.full)
+	
+	return(overlap)
 }
 
 
